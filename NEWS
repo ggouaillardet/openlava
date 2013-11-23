@@ -1,3 +1,8 @@
+
+Release Notes for openlava version 3.0.0
+
+-- Increased res timeout to avoid hosts in -ok state.
+
 Release Notes for openlava version 2.2.
 
 2.2 is a bug fix release.
