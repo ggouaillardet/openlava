@@ -15,10 +15,10 @@
 #define EULER   1024
 
 static link_t   E;
-static link_t   *euler(void);
+static link_t   *_euler(void);
 
 static link_t *
-euler(void)
+_euler(void)
 {
     int      n;
     link_t   *e;
@@ -59,7 +59,7 @@ ecalloc(void)
 {
     link_t   *e;
 
-    if (!euler()) {
+    if (!_euler()) {
         return NULL;
     }
 
@@ -94,7 +94,7 @@ efree(link_t *e)
 /* Make a new link
  */
 link_t *
-initLink(void)
+link_init(void)
 {
     link_t   *link;
 
@@ -110,7 +110,7 @@ initLink(void)
  * This is the stack push operation.
  */
 int
-inLink(link_t *head, void *val)
+link_add(link_t *head, void *val)
 {
     link_t   *el;
 
@@ -131,12 +131,12 @@ inLink(link_t *head, void *val)
 } /* inLink() */
 
 void
-finLink(link_t * head)
+link_fini(link_t * head)
 {
     if (!head)
         return;
 
-    while (popLink(head))
+    while (link_pop(head))
         head->num--;
 
     efree(head);
@@ -146,14 +146,14 @@ finLink(link_t * head)
 /* Just wrap the inLink() and call it push.
  */
 int
-pushLink(link_t *head, void *val)
+link_push(link_t *head, void *val)
 {
     int   cc;
 
     if (!head)
         return -1;
 
-    cc = inLink(head, val);
+    cc = link_add(head, val);
 
     return cc;
 
@@ -162,7 +162,7 @@ pushLink(link_t *head, void *val)
 /* The stack pop operation.
  */
 void *
-popLink(link_t * head)
+link_pop(link_t * head)
 {
     link_t   *p;
     void     *t;
@@ -187,7 +187,7 @@ popLink(link_t * head)
  * this operation is expensive.
  */
 int
-enqueueLink(link_t *head, void *val)
+link_enqueue(link_t *head, void *val)
 {
     link_t   *p;
     link_t   *p2;
@@ -220,7 +220,7 @@ enqueueLink(link_t *head, void *val)
  * the elements by pushLink()
  */
 void *
-dequeueLink(link_t *head)
+link_dequeue(link_t *head)
 {
     link_t   *p;
     link_t   *p2;
@@ -252,12 +252,12 @@ dequeueLink(link_t *head)
  * behave the compare function of qsort(3).
  */
 int
-priorityLink(link_t *head,
-             void *val,
-             void *extra,
-             int (*cmp)(const void *,
-                        const void *,
-                        const void *))
+link_priority_enqueue(link_t *head,
+					  void *val,
+					  void *extra,
+					  int (*cmp)(const void *,
+								 const void *,
+								 const void *))
 {
     link_t   *t;
     link_t   *t2;
@@ -300,7 +300,7 @@ priorityLink(link_t *head,
  * this routine does not remove the element from the list.
  */
 void *
-visitLink(link_t *head)
+link_visit(link_t *head)
 {
     void   *p;
 
@@ -316,7 +316,7 @@ visitLink(link_t *head)
 /* Remove the element val from the link.
  */
 void *
-rmLink(link_t *head, void *val)
+link_rm(link_t *head, void *val)
 {
     link_t   *p;
     link_t   *t;
@@ -353,7 +353,7 @@ rmLink(link_t *head, void *val)
  * remove from the list.
  */
 void *
-peekLink(link_t *head, void *val)
+link_peek(link_t *head, void *val)
 {
     link_t   *p;
 
@@ -384,7 +384,7 @@ peekLink(link_t *head, void *val)
  *
  */
 void
-traverseInit(const link_t *head, linkiter_t *iter)
+link_traverse_init(const link_t *head, linkiter_t *iter)
 {
     if (head == NULL) {
         memset(iter, 0, sizeof(linkiter_t));
@@ -396,7 +396,7 @@ traverseInit(const link_t *head, linkiter_t *iter)
 } /* traverseInit() */
 
 void *
-traverseLink(linkiter_t *iter)
+link_traverse(linkiter_t *iter)
 {
     void   *p;
 
@@ -417,7 +417,7 @@ traverseLink(linkiter_t *iter)
 /* Dybag && test
  */
 static void
-printLink(link_t *h)
+link_print(link_t *h)
 {
     link_t *p;
 
