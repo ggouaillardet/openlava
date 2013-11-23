@@ -4147,26 +4147,28 @@ cntHostSlots (struct hTab *hAcct, struct hData *hp)
 
 #define STAY_TOO_LONG (time(0) - now_disp >= maxSchedStay)
 
+/* scheduleAndDispatchJobs()
+ * Main scheduling routine.
+ */
 int
 scheduleAndDispatchJobs(void)
 {
-    static  char            fname[] = "scheduleAndDispatchJobs";
-    static  struct qData    *nextSchedQ;
-    struct  qData           *qp;
-    static  time_t          lastUpdTime = 0;
-    static  time_t          lastSharedResourceUpdateTime;
+    static  struct qData *nextSchedQ;
+    struct  qData *qp;
+    static  time_t lastUpdTime = 0;
+    static  time_t lastSharedResourceUpdateTime;
     static  struct timeval  scheduleStartTime;
     static  struct timeval  scheduleFinishTime;
-    static  int             newLoadInfo;
-    static int             numQUsable = 0;
-    int                    i;
-    int                    loopCount;
-    int                    tmpVal;
+    static  int newLoadInfo;
+    static int numQUsable = 0;
+    int i;
+    int loopCount;
+    int tmpVal;
     enum dispatchAJobReturnCode dispRet;
-    int                    continueSched;
-    int                    scheduleTime;
-    sTab                   hashSearchPtr;
-    hEnt                   *hashEntryPtr;
+    int continueSched;
+    int scheduleTime;
+    sTab hashSearchPtr;
+    hEnt *hashEntryPtr;
     struct jRef *jR;
     struct jRef *jR0;
     struct jData *jPtr;
@@ -4211,7 +4213,7 @@ scheduleAndDispatchJobs(void)
                     jPtr->processed |= JOB_STAGE_DONE;
                     if (logclass & LC_SCHED) {
                         ls_syslog(LOG_DEBUG2, "\
-%s: free reserved slots from job <%s>", fname, lsb_jobid2str(jPtr->jobId));
+%s: free reserved slots from job <%s>", __func__, lsb_jobid2str(jPtr->jobId));
                     }
                     continue;
                 }
@@ -4230,7 +4232,7 @@ scheduleAndDispatchJobs(void)
         if (logclass & LC_SCHED) {
             gettimeofday(&scheduleStartTime, NULL);
             ls_syslog(LOG_DEBUG, "\
-%s: begin a new schedule and dispatch session", fname);
+%s: begin a new schedule and dispatch session", __func__);
         }
 
         mSchedStage |= M_STAGE_INIT;
@@ -4270,7 +4272,7 @@ scheduleAndDispatchJobs(void)
     if (STAY_TOO_LONG) {
         if (logclass & LC_SCHED) {
             ls_syslog(LOG_DEBUG, "\
-%s: Stayed too long in M_STAGE_GOT_LOAD", fname);
+%s: Stayed too long in M_STAGE_GOT_LOAD", __func__);
         }
         DUMP_CNT();
         RESET_CNT();
@@ -4285,7 +4287,7 @@ scheduleAndDispatchJobs(void)
         if (logclass & LC_SCHED) {
             ls_syslog(LOG_DEBUG,"\
 %s: now_disp=%d lastSharedResourceUpdateTime=%d diff=%d, mSchedStage=%x",
-                      fname, now_disp,
+                      __func__, now_disp,
                       lastSharedResourceUpdateTime,
                       now_disp - (lastSharedResourceUpdateTime
                                   + msleeptime/sharedResourceUpdFactor),
@@ -4312,13 +4314,13 @@ scheduleAndDispatchJobs(void)
     if (logclass & LC_SCHED) {
         ls_syslog(LOG_DEBUG, "\
 %s: M_STAGE_RESUME_SUSP tryResumed",
-                  fname);
+                  __func__);
     }
 
     if (STAY_TOO_LONG) {
         if (logclass & LC_SCHED) {
             ls_syslog(LOG_DEBUG, "\
-%s: Stayed too long in M_STAGE_RESUME_SUSP", fname);
+%s: Stayed too long in M_STAGE_RESUME_SUSP", __func__);
         }
         DUMP_CNT();
         RESET_CNT();
@@ -4339,13 +4341,13 @@ scheduleAndDispatchJobs(void)
     if (logclass & LC_SCHED) {
         ls_syslog(LOG_DEBUG, "\
 %s: M_STAGE_LSB_CAND got numLsbUsable=%d",
-                  fname, numLsbUsable);
+                  __func__, numLsbUsable);
     }
 
     if (STAY_TOO_LONG) {
         if (logclass & LC_SCHED) {
             ls_syslog(LOG_DEBUG, "\
-%s: Stayed too long in M_STAGE_LSB_CAND", fname);
+%s: Stayed too long in M_STAGE_LSB_CAND", __func__);
         }
         DUMP_CNT();
         RESET_CNT();
@@ -4376,7 +4378,7 @@ scheduleAndDispatchJobs(void)
                     if (logclass & LC_SCHED) {
                         ls_syslog(LOG_DEBUG, "\
 %s: Stayed too long in M_STAGE_QUE_CAND; numQUsable=%d timeGetQUsable %d ms",
-                                  fname, numQUsable, timeGetQUsable);
+                                  __func__, numQUsable, timeGetQUsable);
                         DUMP_CNT();
                         RESET_CNT();
                     }
@@ -4396,7 +4398,7 @@ scheduleAndDispatchJobs(void)
     if (logclass & LC_SCHED) {
         ls_syslog(LOG_DEBUG,"\
 %s M_STAGE_QUE_CAND numQUsable=%d timeGetQUsable %d ms",
-                  fname, numQUsable, timeGetQUsable);
+                  __func__, numQUsable, timeGetQUsable);
     }
 
     if (LIST_NUM_ENTRIES(jRefList) == 0) {
@@ -4408,6 +4410,10 @@ scheduleAndDispatchJobs(void)
 
     loopCount = 0;
     ZERO_OUT_TIMERS();
+
+	{
+		jsp->(*lsb_elect_job)(jQlist, &jPtr);
+	}
 
 again:
     min = INT32_MAX;
@@ -4456,14 +4462,14 @@ again:
     dispRet = XORDispatch(jPtr, FALSE, dispatchAJob0);
     if (dispRet == DISP_TIME_OUT) {
         ls_syslog(LOG_DEBUG,"\
-%s STAY_TOO_LONG 3 loopCount <%d>", fname, loopCount);
-        DUMP_TIMERS(fname);
+%s STAY_TOO_LONG 3 loopCount <%d>", __func__, loopCount);
+        DUMP_TIMERS(__func__);
         DUMP_CNT();
         RESET_CNT();
         return -1;
     }
     if (dispRet == DISP_FAIL && STAY_TOO_LONG) {
-        DUMP_TIMERS(fname);
+        DUMP_TIMERS(__func__);
         DUMP_CNT();
         RESET_CNT();
         return -1;
@@ -4477,8 +4483,8 @@ again:
 
     if (logclass & LC_SCHED) {
         ls_syslog(LOG_DEBUG,"\
-%s out of pickAJob/scheduleAJob loopCount <%d>", fname, loopCount);
-        DUMP_TIMERS(fname);
+%s out of pickAJob/scheduleAJob loopCount <%d>", __func__, loopCount);
+        DUMP_TIMERS(__func__);
         DUMP_CNT();
         RESET_CNT();
     }
@@ -4492,7 +4498,7 @@ again:
         scheduleTime =
             (scheduleFinishTime.tv_sec - scheduleStartTime.tv_sec)*1000 +
             (scheduleFinishTime.tv_usec - scheduleStartTime.tv_usec)/1000;
-        ls_syslog(LOG_DEBUG, "%s: Completed a schedule and dispatch session seqNo=%d, time used: %d ms", fname, schedSeqNo, scheduleTime);
+        ls_syslog(LOG_DEBUG, "%s: Completed a schedule and dispatch session seqNo=%d, time used: %d ms", __func__, schedSeqNo, scheduleTime);
     }
 
     ++schedSeqNo;
@@ -4512,7 +4518,7 @@ again:
         jR = jR0;
     }
 
-    DUMP_TIMERS(fname);
+    DUMP_TIMERS(__func__);
     DUMP_CNT();
     RESET_CNT();
 
