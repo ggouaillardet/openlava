@@ -33,11 +33,11 @@
 
 #ifndef MIN
 #define MIN(x,y)        ((x) < (y) ? (x) : (y))
-#endif 
+#endif
 
 #ifndef MAX
 #define MAX(x,y)        ((x) > (y) ? (x) : (y))
-#endif 
+#endif
 
 #define DEF_COMMITTED_RUN_TIME_FACTOR 0.0
 
@@ -53,24 +53,24 @@ extern int sig_encode(int);
 #define LSB_SHAREDIR      1
 #define LSB_SBD_PORT      2
 #define LSB_MBD_PORT      3
-#define LSB_DEBUG_CMD     4 
-#define LSB_TIME_CMD      5 
-#define LSB_CMD_LOGDIR    6 
-#define LSB_CMD_LOG_MASK  7 
+#define LSB_DEBUG_CMD     4
+#define LSB_TIME_CMD      5
+#define LSB_CMD_LOGDIR    6
+#define LSB_CMD_LOG_MASK  7
 #define LSB_API_CONNTIMEOUT 9
 #define LSB_API_RECVTIMEOUT 10
-#define LSB_SERVERDIR 11 
-#define LSB_MODE 12      
-#define LSB_SHORT_HOSTLIST 13  
-#define LSB_INTERACTIVE_STDERR 14 
-#define LSB_32_PAREN_ESC     15 
+#define LSB_SERVERDIR 11
+#define LSB_MODE 12
+#define LSB_SHORT_HOSTLIST 13
+#define LSB_INTERACTIVE_STDERR 14
+#define LSB_32_PAREN_ESC     15
 
-#define LSB_API_QUOTE_CMD     14 
+#define LSB_API_QUOTE_CMD     14
 
 
 typedef struct lsbSubSpoolFile {
-    char inFileSpool[MAXFILENAMELEN];   
-    char commandSpool[MAXFILENAMELEN];  
+    char inFileSpool[MAXFILENAMELEN];
+    char commandSpool[MAXFILENAMELEN];
 } LSB_SUB_SPOOL_FILE_T;
 
 extern int creat_p_socket(void);
@@ -81,11 +81,11 @@ extern int callmbd(char *, char *, int, char **, struct LSFHeader *, int *,
 extern int cmdCallSBD_(char *, char *, int, char **, struct LSFHeader *,
 		       int *);
 
-    
+
 extern int PutQStr(FILE *, char *);
 extern int Q2Str(char *, char *);
 extern int authTicketTokens_(struct lsfAuth *, char *);
-    
+
 extern char *getNextValue0(char **line, char, char);
 extern int readNextPacket(char **, int, struct LSFHeader *, int);
 extern void closeSession(int);
@@ -98,7 +98,7 @@ extern ushort get_sbd_port (void);
 extern int getAuth(struct lsfAuth *);
 extern int getCommonParams (struct submit  *, struct submitReq *,
                                                  struct submitReply *);
-extern int getOtherParams (struct submit *, struct submitReq *, 
+extern int getOtherParams (struct submit *, struct submitReq *,
                                    struct submitReply *, struct lsfAuth *,
                                    LSB_SUB_SPOOL_FILE_T*);
 extern int chUserRemoveSpoolFile( const char * hostName,

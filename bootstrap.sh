@@ -6,4 +6,3 @@ autoconf
 autoheader
 automake --add-missing --copy
 set +x
-test -n "$NOCONFIGURE" || ./configure "$@"

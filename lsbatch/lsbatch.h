@@ -48,11 +48,11 @@
 #define LSB_HOST_BUSY(status)     ((status & HOST_STAT_BUSY) != 0)
 
 #define LSB_HOST_CLOSED(status)     ((status & (HOST_STAT_WIND | \
-					HOST_STAT_DISABLED |     \
-					HOST_STAT_LOCKED |       \
-					HOST_STAT_LOCKED_MASTER | \
-					HOST_STAT_FULL |         \
-					HOST_STAT_NO_LIM)) != 0)
+                                        HOST_STAT_DISABLED |     \
+                                        HOST_STAT_LOCKED |       \
+                                        HOST_STAT_LOCKED_MASTER | \
+                                        HOST_STAT_FULL |         \
+                                        HOST_STAT_NO_LIM)) != 0)
 
 #define LSB_HOST_FULL(status)          ((status & HOST_STAT_FULL) != 0)
 
@@ -86,6 +86,8 @@
 #define Q_ATTRIB_EXCLUSIVE        0x01
 #define Q_ATTRIB_DEFAULT          0x02
 #define Q_ATTRIB_ROUND_ROBIN      0x04
+#define Q_ATTRIB_FAIRSHARE        0x08
+#define Q_ATTRIB_FCFS             0x10
 #define Q_ATTRIB_BACKFILL         0x80
 #define Q_ATTRIB_HOST_PREFER      0x100
 #define Q_ATTRIB_NO_INTERACTIVE   0x800
@@ -186,7 +188,7 @@
 #define PEND_QUE_SPREAD_TASK       313
 #define PEND_QUE_PJOB_LIMIT        314
 #define PEND_QUE_WINDOW_WILL_CLOSE 315
-#define PEND_QUE_PROCLIMIT	   316
+#define PEND_QUE_PROCLIMIT         316
 
 #define PEND_USER_JOB_LIMIT    601
 #define PEND_UGRP_JOB_LIMIT    602
@@ -441,7 +443,7 @@
 #define    LSBE_HP_FIRST_HOST       123
 #define    LSBE_OTHERS_FIRST_HOST   124
 
-#define    LSBE_PROC_LESS     	    125
+#define    LSBE_PROC_LESS           125
 #define    LSBE_MOD_MIX_OPTS        126
 #define    LSBE_MOD_CPULIMIT        127
 #define    LSBE_MOD_MEMLIMIT        128
@@ -465,7 +467,7 @@
 #define  SUB_EXCLUSIVE      0x40
 #define  SUB_NOTIFY_END     0x80
 #define  SUB_NOTIFY_BEGIN   0x100
-#define  SUB_USER_GROUP	    0x200
+#define  SUB_USER_GROUP     0x200
 #define  SUB_CHKPNT_PERIOD  0x400
 #define  SUB_CHKPNT_DIR     0x800
 #define  SUB_CHKPNTABLE     SUB_CHKPNT_DIR
@@ -477,9 +479,9 @@
 #define  SUB_DEPEND_COND    0x20000
 #define  SUB_RES_REQ        0x40000
 #define  SUB_OTHER_FILES    0x80000
-#define  SUB_PRE_EXEC	    0x100000
+#define  SUB_PRE_EXEC       0x100000
 #define  SUB_LOGIN_SHELL    0x200000
-#define  SUB_MAIL_USER 	    0x400000
+#define  SUB_MAIL_USER      0x400000
 #define  SUB_MODIFY         0x800000
 #define  SUB_MODIFY_ONCE    0x1000000
 #define  SUB_PROJECT_NAME   0x2000000
@@ -591,12 +593,12 @@ struct submig {
 #define JOBID_ONLY_ALL  0x02000
 #define ZOMBIE_JOB      0x04000
 
-#define    JGRP_NODE_JOB	1
-#define    JGRP_NODE_GROUP	2
-#define    JGRP_NODE_ARRAY	3
+#define    JGRP_NODE_JOB        1
+#define    JGRP_NODE_GROUP      2
+#define    JGRP_NODE_ARRAY      3
 
-#define LSB_MAX_ARRAY_JOBID	0x0FFFFFFFF
-#define LSB_MAX_ARRAY_IDX	0x0FFFF
+#define LSB_MAX_ARRAY_JOBID     0x0FFFFFFFF
+#define LSB_MAX_ARRAY_IDX       0x0FFFF
 #define LSB_MAX_SEDJOB_RUNID    (0x0F)
 #define LSB_JOBID(array_jobId, array_idx)  \
                  (((LS_UNS_LONG_INT)array_idx << 32) | array_jobId)
@@ -755,6 +757,7 @@ struct queueInfoEnt {
     int    defLimits[LSF_RLIM_NLIMITS];
     int    minProcLimit;
     int    defProcLimit;
+    char   *fairshare;
 };
 
 #define ACT_NO              0
@@ -824,7 +827,7 @@ struct parameterInfo {
     int     scheRawLoad;
     int     preExecDelay;
     int     slotResourceReserve;
-    int	    maxJobId;
+    int     maxJobId;
     int     maxAcctArchiveNum;
     int     acctArchiveInDays;
     int     acctArchiveInSize;
@@ -1007,7 +1010,7 @@ struct jobStartLog {
     char   **execHosts;
     char   *queuePreCmd;
     char   *queuePostCmd;
-    int	   jFlags;
+    int    jFlags;
     int    idx;
 };
 
@@ -1346,11 +1349,11 @@ struct lsbMsg {
 };
 
 
-#define CONF_NO_CHECK    	0x00
-#define CONF_CHECK      	0x01
-#define CONF_EXPAND     	0X02
+#define CONF_NO_CHECK           0x00
+#define CONF_CHECK              0x01
+#define CONF_EXPAND             0X02
 #define CONF_RETURN_HOSTSPEC    0X04
-#define CONF_NO_EXPAND    	0X08
+#define CONF_NO_EXPAND          0X08
 
 struct paramConf {
     struct parameterInfo *param;
@@ -1393,7 +1396,7 @@ struct queueConf {
 #define  IS_PEND(s)  (((s) & JOB_STAT_PEND) || ((s) & JOB_STAT_PSUSP))
 
 #define  IS_START(s)  (((s) & JOB_STAT_RUN) || ((s) & JOB_STAT_SSUSP) \
-		       || ((s) & JOB_STAT_USUSP))
+                       || ((s) & JOB_STAT_USUSP))
 
 #define  IS_FINISH(s) (((s) & JOB_STAT_DONE) || ((s) & JOB_STAT_EXIT))
 
@@ -1424,79 +1427,71 @@ extern char * lsb_printNameList(NAMELIST *, int );
 extern NAMELIST * lsb_compressStrList(char **, int );
 extern char * lsb_splitName(char *, unsigned int *);
 
-
-#if defined(__STDC__)
-#define P_(s) s
-#else
-#define P_(s) ()
-#endif
-
-
-extern struct paramConf *lsb_readparam P_((struct lsConf *));
-extern struct userConf * lsb_readuser  P_((struct lsConf *, int,
-					  struct clusterConf *));
-extern struct userConf * lsb_readuser_ex P_((struct lsConf *, int,
-					     struct clusterConf *,
-					     struct sharedConf *));
-extern struct hostConf *lsb_readhost P_((struct lsConf *, struct lsInfo *, int,
-					 struct clusterConf *));
-extern struct queueConf *lsb_readqueue P_((struct lsConf *, struct lsInfo *,
-					   int, struct sharedConf *));
+extern struct paramConf *lsb_readparam (struct lsConf *);
+extern struct userConf * lsb_readuser  (struct lsConf *, int,
+                                          struct clusterConf *);
+extern struct userConf * lsb_readuser_ex (struct lsConf *, int,
+                                             struct clusterConf *,
+                                             struct sharedConf *);
+extern struct hostConf *lsb_readhost (struct lsConf *, struct lsInfo *, int,
+                                         struct clusterConf *);
+extern struct queueConf *lsb_readqueue (struct lsConf *, struct lsInfo *,
+                                           int, struct sharedConf *);
 extern void updateClusterConf(struct clusterConf *);
 
 
-extern int lsb_init P_((char *appName));
-extern int lsb_openjobinfo P_((LS_LONG_INT, char *, char *, char *, char *,
-			       int));
-extern struct jobInfoHead *lsb_openjobinfo_a P_((LS_LONG_INT, char *,char *,
-						 char *, char *, int));
-extern struct jobInfoEnt *lsb_readjobinfo P_((int *));
-extern LS_LONG_INT lsb_submit P_((struct submit  *, struct submitReply *));
+extern int lsb_init (char *appName);
+extern int lsb_openjobinfo (LS_LONG_INT, char *, char *, char *, char *,
+                               int);
+extern struct jobInfoHead *lsb_openjobinfo_a (LS_LONG_INT, char *,char *,
+                                                 char *, char *, int);
+extern struct jobInfoEnt *lsb_readjobinfo (int *);
+extern LS_LONG_INT lsb_submit (struct submit  *, struct submitReply *);
 
 
-extern void lsb_closejobinfo P_((void));
+extern void lsb_closejobinfo (void);
 
-extern int  lsb_hostcontrol P_((char *, int));
-extern struct queueInfoEnt *lsb_queueinfo P_((char **queues, int *numQueues, char *host, char *userName, int options));
-extern int  lsb_reconfig P_((int));
-extern int  lsb_signaljob P_((LS_LONG_INT, int));
-extern int  lsb_msgjob P_((LS_LONG_INT, char *));
-extern int  lsb_chkpntjob P_((LS_LONG_INT, time_t, int));
-extern int  lsb_deletejob P_((LS_LONG_INT, int, int));
-extern int  lsb_forcekilljob P_((LS_LONG_INT));
-extern int  lsb_requeuejob P_((struct jobrequeue *));
-extern char *lsb_sysmsg P_((void));
-extern void lsb_perror P_((char *));
-extern char *lsb_sperror P_((char *));
-extern char *lsb_peekjob P_((LS_LONG_INT));
+extern int  lsb_hostcontrol (char *, int);
+extern struct queueInfoEnt *lsb_queueinfo (char **queues, int *numQueues, char *host, char *userName, int options);
+extern int  lsb_reconfig (int);
+extern int  lsb_signaljob (LS_LONG_INT, int);
+extern int  lsb_msgjob (LS_LONG_INT, char *);
+extern int  lsb_chkpntjob (LS_LONG_INT, time_t, int);
+extern int  lsb_deletejob (LS_LONG_INT, int, int);
+extern int  lsb_forcekilljob (LS_LONG_INT);
+extern int  lsb_requeuejob (struct jobrequeue *);
+extern char *lsb_sysmsg (void);
+extern void lsb_perror (char *);
+extern char *lsb_sperror (char *);
+extern char *lsb_peekjob (LS_LONG_INT);
 
-extern int lsb_mig P_((struct submig *, int *badHostIdx));
+extern int lsb_mig (struct submig *, int *badHostIdx);
 
-extern struct hostInfoEnt *lsb_hostinfo P_(( char **, int *));
-extern struct hostInfoEnt *lsb_hostinfo_ex P_(( char **, int *, char *, int));
-extern int lsb_movejob P_((LS_LONG_INT jobId, int *, int));
-extern int lsb_switchjob P_((LS_LONG_INT jobId, char *queue));
-extern int lsb_queuecontrol P_((char *, int));
-extern struct userInfoEnt *lsb_userinfo P_(( char **, int *));
-extern struct groupInfoEnt *lsb_hostgrpinfo P_((char**, int *, int));
-extern struct groupInfoEnt *lsb_usergrpinfo P_((char **, int *, int));
-extern struct parameterInfo *lsb_parameterinfo P_((char **, int *, int));
-extern LS_LONG_INT lsb_modify P_((struct submit *, struct submitReply *, LS_LONG_INT));
-extern float * getCpuFactor P_((char *, int));
-extern char *lsb_suspreason P_((int, int, struct loadIndexLog *));
-extern char *lsb_pendreason P_((int, int *, struct jobInfoHead *,
-                            struct loadIndexLog *));
+extern struct hostInfoEnt *lsb_hostinfo ( char **, int *);
+extern struct hostInfoEnt *lsb_hostinfo_ex ( char **, int *, char *, int);
+extern int lsb_movejob (LS_LONG_INT jobId, int *, int);
+extern int lsb_switchjob (LS_LONG_INT jobId, char *queue);
+extern int lsb_queuecontrol (char *, int);
+extern struct userInfoEnt *lsb_userinfo ( char **, int *);
+extern struct groupInfoEnt *lsb_hostgrpinfo (char**, int *, int);
+extern struct groupInfoEnt *lsb_usergrpinfo (char **, int *, int);
+extern struct parameterInfo *lsb_parameterinfo (char **, int *, int);
+extern LS_LONG_INT lsb_modify (struct submit *, struct submitReply *, LS_LONG_INT);
+extern float * getCpuFactor (char *, int);
+extern char *lsb_suspreason (int, int, struct loadIndexLog *);
+extern char *lsb_pendreason (int, int *, struct jobInfoHead *,
+                            struct loadIndexLog *);
 
-extern int lsb_puteventrec P_((FILE *, struct eventRec *));
-extern struct eventRec *lsb_geteventrec P_((FILE *, int *));
-extern struct lsbSharedResourceInfo *lsb_sharedresourceinfo P_((char **, int *, char *, int));
+extern int lsb_puteventrec (FILE *, struct eventRec *);
+extern struct eventRec *lsb_geteventrec (FILE *, int *);
+extern struct lsbSharedResourceInfo *lsb_sharedresourceinfo (char **, int *, char *, int);
 
-extern int lsb_runjob P_((struct runJobRequest*));
+extern int lsb_runjob (struct runJobRequest*);
 
-extern char *lsb_jobid2str P_((LS_LONG_INT));
-extern char *lsb_jobidinstr P_((LS_LONG_INT));
-extern void jobId32To64 P_((LS_LONG_INT*, int, int));
-extern void jobId64To32 P_((LS_LONG_INT, int*, int*));
+extern char *lsb_jobid2str (LS_LONG_INT);
+extern char *lsb_jobidinstr (LS_LONG_INT);
+extern void jobId32To64 (LS_LONG_INT*, int, int);
+extern void jobId64To32 (LS_LONG_INT, int*, int*);
 extern int lsb_setjobattr(int, struct jobAttrInfoEnt *);
 
 extern LS_LONG_INT lsb_rexecv(int, char **, char **, int *, int);
@@ -1512,8 +1507,5 @@ int getMaxSortIntList(struct sortIntList *, int *);
 int getTotalSortIntList(struct sortIntList *);
 
 int updateJobIdIndexFile (char *, char *, int);
-
-
-#undef P_
 
 #endif

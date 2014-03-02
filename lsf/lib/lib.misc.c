@@ -140,15 +140,13 @@ putstr_(const char *s)
 {
     register char *p;
 
-    if (s == (char *)NULL) {
+    if (s == NULL) {
         s = "";
     }
 
-    p = malloc(strlen(s)+1);
+    p = strdup(s);
     if (!p)
         return NULL;
-
-    strcpy(p, s);
 
     return p;
 }

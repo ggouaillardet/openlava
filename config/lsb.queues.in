@@ -182,6 +182,9 @@ NICE         = 20
 #PRE_EXEC     = /usr/local/lsf/misc/testq_pre >> /tmp/pre.out
 #POST_EXEC    = /usr/local/lsf/misc/testq_post |grep -v "Hey"
 #REQUEUE_EXIT_VALUES = 55 34 78
+#SCHEDULING_POLICY = FAIRSHARE[G1 G2 G3]
+#SCHEDULING_POLICY = ROUND_ROBIN
+SCHEDULING_POLICY = FCFS
 DESCRIPTION  = For normal low priority jobs, running only if hosts are \
 lightly loaded.
 End Queue

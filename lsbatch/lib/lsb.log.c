@@ -290,17 +290,16 @@ lsb_openelog (struct eventLogFile *ePtr, int *lineNum)
 struct eventRec *
 lsb_getelogrec (struct eventLogHandle *ePtr, int *lineNum)
 {
-    static char fname[] = "lsb_getelogrec";
     struct eventRec *logRec;
     FILE *newfp;
     char *sp, eventFile[MAXFILENAMELEN];
 
+	logRec = NULL;
     if (ePtr->fp != NULL)
         logRec = lsb_geteventrec(ePtr->fp, lineNum);
 
     if (logRec == NULL && ePtr->lastOpenFile >= 0
         && ePtr->curOpenFile > ePtr->lastOpenFile) {
-
 
         fclose(ePtr->fp);
 
@@ -318,24 +317,23 @@ lsb_getelogrec (struct eventLogHandle *ePtr, int *lineNum)
         strcpy(ePtr->openEventFile, eventFile);
 
         if ((newfp = fopen (eventFile, "r")) == NULL) {
-            ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "fopen", eventFile);
+            ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, __func__, "fopen", eventFile);
             return (NULL);
         } else if (ePtr->curOpenFile == 0) {
             char ch;
             int pos;
 
-
             if (fscanf(newfp, "%c%d ", &ch, &pos) != 2
                 || ch != '#') {
                 ls_syslog(LOG_ERR, I18N(5501,
-                                        "%s: fscanf(%s) failed: old event file format"), fname, eventFile);
+                                        "%s: fscanf(%s) failed: old event file format"), __func__, eventFile);
                 pos = 0;
             } else {
                 *lineNum = 1;
                 countLineNum(newfp, pos, lineNum);
             }
             if (fseek (newfp, pos, SEEK_SET) != 0)
-                ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M,  fname, "fseek", pos);
+                ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M,  __func__, "fseek", pos);
         }
         logRec  = lsb_geteventrec(newfp, lineNum);
         ePtr->fp = newfp;
@@ -362,7 +360,6 @@ lsb_geteventrec(FILE *log_fp, int *LineNum)
 struct eventRec *
 lsb_geteventrec_ex(FILE *log_fp, int *LineNum, char* usedLine)
 {
-    static  char            fname[] = "lsb_geteventrec";
     int                     cc;
     int                     ccount;
     char*                   line;
@@ -406,7 +403,7 @@ lsb_geteventrec_ex(FILE *log_fp, int *LineNum, char* usedLine)
     }
 
     if (logclass & LC_TRACE)
-        ls_syslog(LOG_DEBUG2, "%s: line=%s", fname, line);
+        ls_syslog(LOG_DEBUG2, "%s: line=%s", __func__, line);
 
     if (usedLine) {
         strcpy(usedLine, line);
@@ -463,7 +460,7 @@ lsb_geteventrec_ex(FILE *log_fp, int *LineNum, char* usedLine)
     if ((logRec->type = getEventTypeAndKind(etype, &eventKind)) == -1)
         return NULL;
     if (logclass & LC_TRACE)
-        ls_syslog(LOG_DEBUG2, "%s: log.type=%x", fname, logRec->type);
+        ls_syslog(LOG_DEBUG2, "%s: log.type=%x", __func__, logRec->type);
 
     readEventRecord (line, logRec);
 
@@ -948,7 +945,6 @@ readJobMod(char *line, struct jobModLog *jobModLog)
 static int
 readJobStart(char *line, struct jobStartLog *jobStartLog)
 {
-    static char  fname[] = "readJobStart";
     int i, cc, ccount;
 
     cc = sscanf(line, "%d%d%d%d%f%d%n",
@@ -966,7 +962,7 @@ readJobStart(char *line, struct jobStartLog *jobStartLog)
     if (jobStartLog->numExHosts == 0) {
         ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5502,
                                          "%s: The number of execution hosts is zero for job <%d>"), /* catgets 5502 */
-                  fname,
+                  __func__,
                   jobStartLog->jobId);
         return (LSBE_EVENT_FORMAT);
     }
@@ -2877,7 +2873,6 @@ struct eventRec *
 lsbGetNextJobEvent (struct eventLogHandle *ePtr, int *lineNum,
                     int numJobIds, LS_LONG_INT *jobIds, struct jobIdIndexS *indexS)
 {
-    static char fname[] = "lsbGetNextJobEvent";
     struct eventRec *logRec = NULL;
     FILE *newfp;
     char *sp, eventFile[MAXFILENAMELEN];
@@ -2933,7 +2928,7 @@ lsbGetNextJobEvent (struct eventLogHandle *ePtr, int *lineNum,
             strcpy(ePtr->openEventFile, eventFile);
             *lineNum = 0;
             if ((newfp = fopen (eventFile, "r")) == NULL) {
-                ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "fopen",
+                ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, __func__, "fopen",
                           eventFile);
                 lsberrno = LSBE_SYS_CALL;
                 return (NULL);
@@ -2946,14 +2941,14 @@ lsbGetNextJobEvent (struct eventLogHandle *ePtr, int *lineNum,
                     || ch != '#') {
                     ls_syslog(LOG_INFO, I18N(5501,
                                              "%s: fscanf(%s) warning: old event file format"), /* catgets 5501 */
-                              fname, eventFile);
+                              __func__, eventFile);
                     pos = 0;
                 } else {
                     *lineNum = 1;
                     countLineNum(newfp, pos, lineNum);
                 }
                 if (fseek (newfp, pos, SEEK_SET) != 0)
-                    ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M,  fname, "fseek", pos);
+                    ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M,  __func__, "fseek", pos);
             }
             ePtr->fp = newfp;
             continue;
@@ -3616,7 +3611,6 @@ writeJobIdIndexToIndexFile (FILE *indexFp, struct sortIntList *header,
 int
 updateJobIdIndexFile (char *indexFile, char *eventFile, int totalEventFile)
 {
-    static  char       fname[] = "updateJobIdIndexFile";
     struct stat             st;
     FILE                    *indexFp;
     char                    nameBuf[MAXLINELEN];
@@ -3629,6 +3623,7 @@ updateJobIdIndexFile (char *indexFile, char *eventFile, int totalEventFile)
     int                     i;
 
     lsberrno = LSBE_NO_ERROR;
+	indexFp = NULL;
 
     if (stat(indexFile, &st) == 0) {
 
@@ -3642,7 +3637,7 @@ updateJobIdIndexFile (char *indexFile, char *eventFile, int totalEventFile)
             strcmp(nameBuf, LSF_JOBIDINDEX_FILETAG)) {
             ls_syslog(LOG_ERR, I18N(5506,
                                     "%s: %s is not an jobid index file"), /* catgets 5506 */
-                      fname, indexFile);
+                      __func__, indexFile);
             lsberrno = LSBE_INDEX_FORMAT;
             fclose(indexFp);
             unlink(indexFile);
@@ -3677,7 +3672,7 @@ updateJobIdIndexFile (char *indexFile, char *eventFile, int totalEventFile)
 
         if (fchmod(fileno(indexFp),  0644) != 0) {
             ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M,
-                      fname, "fchmod", indexFile);
+                      __func__, "fchmod", indexFile);
         }
 
         addedEventFile = totalEventFile;
@@ -3836,7 +3831,6 @@ getNextFileNumFromIndexS (struct jobIdIndexS *indexS, int numJobIds,
 time_t
 lsb_getAcctFileTime(char * fileName)
 {
-    static char fname[] = "lsb_getAcctFileTime";
     struct eventRec * acctLogPtr = NULL;
     struct stat jbuf;
     FILE * acctLogFp = NULL;
@@ -3856,7 +3850,7 @@ lsb_getAcctFileTime(char * fileName)
 
                     if (logclass & LC_EXEC){
                         ls_syslog(LOG_DEBUG, I18N(5507, "%s: Error in reading event file <%s> at line <%d>\n"), /* catgets 5507 */
-                                  fname,
+                                  __func__,
                                   fileName,
                                   lineNum);
                     }

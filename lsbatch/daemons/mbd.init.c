@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2011-2014 David Bigagli
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -132,8 +133,8 @@ static void freeGrp (struct gData *);
 static int validHostSpec (char *);
 static void getMaxCpufactor(void);
 static int parseFirstHostErr(int , char *, char *, struct qData *, struct askedHost *, int );
-
 static struct hData *mkLostAndFoundHost(void);
+static int initMBDPlugins(void);
 
 int
 minit(int mbdInitFlags)
@@ -144,7 +145,6 @@ minit(int mbdInitFlags)
     char *master;
 
     ls_syslog(LOG_DEBUG, "%s: Entering this routine...", __func__);
-
 
     Signal_(SIGTERM, (SIGFUNCTYPE) terminate_handler);
     Signal_(SIGINT,  (SIGFUNCTYPE) terminate_handler);
@@ -345,6 +345,10 @@ minit(int mbdInitFlags)
     }
 
     getMaxCpufactor();
+
+    /* Init MBD scheduling plugins.
+     */
+    initMBDPlugins();
 
     return 0;
 }
@@ -2123,7 +2127,7 @@ setDefaultParams(void)
 }
 
 static void
-addQData(struct queueConf *queueConf, int mbdInitFlags )
+addQData(struct queueConf *queueConf, int mbdInitFlags)
 {
     int i;
     int badqueue;
@@ -2181,7 +2185,7 @@ addQData(struct queueConf *queueConf, int mbdInitFlags )
         }
 
         badqueue = FALSE;
-        if (qPtr->uGPtr)
+        if (qPtr->uGPtr) {
             if (qPtr->uGPtr->memberTab.numEnts == 0
                 && qPtr->uGPtr->numGroups == 0) {
 
@@ -2191,6 +2195,8 @@ addQData(struct queueConf *queueConf, int mbdInitFlags )
                 lsb_CheckError = WARNING_ERR;
                 badqueue = TRUE;
             }
+	}
+
         if (qPtr->hostList != NULL
             && strcmp(qPtr->hostList, "none")
             && qPtr->numAskedPtr <= 0
@@ -2371,32 +2377,32 @@ addQData(struct queueConf *queueConf, int mbdInitFlags )
             qPtr->acceptIntvl = accept_intvl;
 
         if (queue->admins)
-            parseAUids (qPtr, queue->admins);
+            parseAUids(qPtr, queue->admins);
 
         if (queue->preCmd)
-            qPtr->preCmd = safeSave (queue->preCmd);
+            qPtr->preCmd = safeSave(queue->preCmd);
 
-	if (queue->prepostUsername)
-	    qPtr->prepostUsername = safeSave (queue->prepostUsername);
+        if (queue->prepostUsername)
+            qPtr->prepostUsername = safeSave(queue->prepostUsername);
 
         if (queue->postCmd)
-            qPtr->postCmd = safeSave (queue->postCmd);
+            qPtr->postCmd = safeSave(queue->postCmd);
 
         if (queue->requeueEValues) {
-            qPtr->requeueEValues = safeSave (queue->requeueEValues);
+            qPtr->requeueEValues = safeSave(queue->requeueEValues);
 
             if (qPtr->requeEStruct) {
                 clean_requeue(qPtr);
             }
-            requeueEParse (&qPtr->requeEStruct, queue->requeueEValues, &j);
+            requeueEParse(&qPtr->requeEStruct, queue->requeueEValues, &j);
 
         }
 
         if (queue->resReq) {
             qPtr->resValPtr = checkResReq(queue->resReq,
-                                        USE_LOCAL
-                                        | PARSE_XOR
-                                        | CHK_TCL_SYNTAX);
+					  USE_LOCAL
+					  | PARSE_XOR
+					  | CHK_TCL_SYNTAX);
             if (qPtr->resValPtr == NULL) {
                 ls_syslog(LOG_ERR, "\
 %s: invalid RES_REQ %s in queues %s; ignoring",
@@ -2420,7 +2426,7 @@ addQData(struct queueConf *queueConf, int mbdInitFlags )
                 lsb_CheckError = WARNING_ERR;
             } else {
                 qPtr->resumeCondVal = resValPtr;
-                qPtr->resumeCond = safeSave (queue->resumeCond);
+                qPtr->resumeCond = safeSave(queue->resumeCond);
             }
         }
 
@@ -2435,7 +2441,7 @@ addQData(struct queueConf *queueConf, int mbdInitFlags )
                 lsb_CheckError = WARNING_ERR;
             } else {
                 lsbFreeResVal (&resValPtr);
-                qPtr->stopCond = safeSave (queue->stopCond);
+                qPtr->stopCond = safeSave(queue->stopCond);
             }
         }
 
@@ -2466,7 +2472,7 @@ addQData(struct queueConf *queueConf, int mbdInitFlags )
         if (queue->chkpntDir) {
             if (qPtr->chkpntDir)
                 FREEUP(qPtr->chkpntDir);
-            qPtr->chkpntDir = safeSave (queue->chkpntDir);
+            qPtr->chkpntDir = safeSave(queue->chkpntDir);
         }
 
         if (queue->qAttrib & Q_ATTRIB_CHKPNT)
@@ -2477,6 +2483,9 @@ addQData(struct queueConf *queueConf, int mbdInitFlags )
 
         if (qPtr->qAttrib & Q_ATTRIB_BACKFILL)
             qAttributes |= Q_ATTRIB_BACKFILL;
+
+	if (qPtr->qAttrib & Q_ATTRIB_FAIRSHARE)
+	    qPtr->fairshare = safeSave(queue->fairshare);
     }
 }
 
@@ -3368,4 +3377,12 @@ parseFirstHostErr(int returnErr, char *fname, char *hosts, struct qData *qp, str
         return 0;
     } else
         return 1;
+}
+
+/* initMBDPlugins()
+ */
+static int
+initMBDPlugins(void)
+{
+    return 0;
 }

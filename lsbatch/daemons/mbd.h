@@ -516,7 +516,6 @@ struct qData {
     char      *preCmd;
     char      *postCmd;
     char      *prepostUsername;
-
     struct requeueEStruct {
         int type;
 #define RQE_NORMAL   0
@@ -525,7 +524,6 @@ struct qData {
         int  value;
         int  interval;
     } *requeEStruct;
-
     char      *requeueEValues;
     char      *windowsD;
     windows_t *week[8];
@@ -580,6 +578,7 @@ struct qData {
     char   *chkpntDir;
     int    minProcLimit;
     int    defProcLimit;
+    char *fairshare;
 };
 
 

@@ -1,5 +1,6 @@
-/* $Id: lsb.queues.c 397 2007-11-26 19:04:00Z mblack $
+/*
  * Copyright (C) 2007 Platform Computing Inc
+ * Copyright (C) 2011-2014 David Bigagli
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of version 2 of the GNU General Public License as
@@ -27,7 +28,7 @@ struct queueInfoEnt *
 lsb_queueinfo (char **queues, int *numQueues, char *hosts, char *users, int options)
 {
     mbdReqType mbdReqtype;
-    static struct infoReq queueInfoReq;         
+    static struct infoReq queueInfoReq;
     static struct queueInfoReply reply;
     static struct queueInfoEnt **qInfo = NULL;
     struct queueInfoEnt **qTmp;
@@ -38,7 +39,7 @@ lsb_queueinfo (char **queues, int *numQueues, char *hosts, char *users, int opti
     static struct LSFHeader hdr;
     char *clusterName = NULL;
 
-    
+
     if (qInfo != NULL) {
 	for (i = 0; i < reply.numQueues; i++) {
 	    xdr_lsffree(xdr_queueInfoEnt,
@@ -56,10 +57,10 @@ lsb_queueinfo (char **queues, int *numQueues, char *hosts, char *users, int opti
         return NULL;
     }
 
-    queueInfoReq.options = 0;                
+    queueInfoReq.options = 0;
 
     if (queueInfoReq.names) {
-        FREEUP (queueInfoReq.names);           
+        FREEUP (queueInfoReq.names);
     }
 
     if (numQueues == NULL || *numQueues == 0)
@@ -67,7 +68,7 @@ lsb_queueinfo (char **queues, int *numQueues, char *hosts, char *users, int opti
     else if (queues == NULL && *numQueues == 1)
         queueInfoReq.options |= DFT_QUEUE;
 
-    if ((queueInfoReq.options & ALL_QUEUE) 
+    if ((queueInfoReq.options & ALL_QUEUE)
          || (queueInfoReq.options & DFT_QUEUE)) {
         if ((queueInfoReq.names = (char **)malloc (3 * sizeof(char *))) == NULL) {
             lsberrno = LSBE_NO_MEM;
@@ -75,17 +76,17 @@ lsb_queueinfo (char **queues, int *numQueues, char *hosts, char *users, int opti
         }
         queueInfoReq.names[0] = "";
 	queueInfoReq.numNames = 1;
-        cc = 1;                                            
+        cc = 1;
     }
     else {
-        if ((queueInfoReq.names = (char **)calloc 
+        if ((queueInfoReq.names = (char **)calloc
                                    (*numQueues + 2, sizeof(char*))) == NULL) {
             lsberrno = LSBE_NO_MEM;
             return(NULL);
         }
         queueInfoReq.numNames = *numQueues;
         for (i = 0; i < *numQueues; i++) {
-            if (queues[i] && strlen (queues[i]) + 1 < MAXHOSTNAMELEN) 
+            if (queues[i] && strlen (queues[i]) + 1 < MAXHOSTNAMELEN)
                 queueInfoReq.names[i] = queues[i];
             else {
                 free (queueInfoReq.names);
@@ -95,7 +96,7 @@ lsb_queueinfo (char **queues, int *numQueues, char *hosts, char *users, int opti
                 return (NULL);
             }
         }
-        cc = queueInfoReq.numNames;                 
+        cc = queueInfoReq.numNames;
     }
     if (users != NULL) {
         if (strlen (users) + 1 < MAX_LSB_NAME_LEN) {
@@ -110,7 +111,7 @@ lsb_queueinfo (char **queues, int *numQueues, char *hosts, char *users, int opti
     }
 
     if (hosts != NULL) {
-        if (ls_isclustername(hosts) <= 0) {          
+        if (ls_isclustername(hosts) <= 0) {
             if (strlen (hosts) + 1 < MAXHOSTNAMELEN) {
                 queueInfoReq.options |= CHECK_HOST;
                 queueInfoReq.names[cc] = hosts;
@@ -120,14 +121,14 @@ lsb_queueinfo (char **queues, int *numQueues, char *hosts, char *users, int opti
                 *numQueues = 0;
                 return (NULL);
             }
-        } else                       
+        } else
             clusterName = hosts;
     }
     queueInfoReq.resReq = "";
 
-    
 
-    
+
+
 
     mbdReqtype = BATCH_QUE_INFO;
     cc = sizeof(struct infoReq) + cc * MAXHOSTNAMELEN + cc + 100;
@@ -136,7 +137,7 @@ lsb_queueinfo (char **queues, int *numQueues, char *hosts, char *users, int opti
         return(NULL);
     }
     xdrmem_create(&xdrs, request_buf, MSGSIZE, XDR_ENCODE);
-    initLSFHeader_(&hdr); 
+    initLSFHeader_(&hdr);
     hdr.opCode = mbdReqtype;
     if (!xdr_encodeMsg(&xdrs, (char*) &queueInfoReq, &hdr, xdr_infoReq,
 		       0, NULL)) {
@@ -146,8 +147,8 @@ lsb_queueinfo (char **queues, int *numQueues, char *hosts, char *users, int opti
         return(NULL);
     }
 
-    
-    if ((cc = callmbd(clusterName, request_buf, XDR_GETPOS(&xdrs), &reply_buf, 
+
+    if ((cc = callmbd(clusterName, request_buf, XDR_GETPOS(&xdrs), &reply_buf,
                       &hdr, NULL, NULL, NULL)) == -1)
     {
         xdr_destroy(&xdrs);
@@ -158,10 +159,10 @@ lsb_queueinfo (char **queues, int *numQueues, char *hosts, char *users, int opti
     xdr_destroy(&xdrs);
     free (request_buf);
 
-    
+
     lsberrno = hdr.opCode;
     if (lsberrno == LSBE_NO_ERROR || lsberrno == LSBE_BAD_QUEUE) {
-	xdrmem_create(&xdrs2, reply_buf, XDR_DECODE_SIZE_(cc), XDR_DECODE);	
+	xdrmem_create(&xdrs2, reply_buf, XDR_DECODE_SIZE_(cc), XDR_DECODE);
         if (!xdr_queueInfoReply(&xdrs2, &reply, &hdr)) {
 	    lsberrno = LSBE_XDR;
             xdr_destroy(&xdrs2);
@@ -185,7 +186,7 @@ lsb_queueinfo (char **queues, int *numQueues, char *hosts, char *users, int opti
 	qInfo = qTmp;
         for (i = 0; i < reply.numQueues; i++)
             qInfo[i] = &(reply.queues[i]);
-	
+
         *numQueues = reply.numQueues;
 	return(qInfo[0]);
     }
@@ -195,5 +196,5 @@ lsb_queueinfo (char **queues, int *numQueues, char *hosts, char *users, int opti
     *numQueues = 0;
     return(NULL);
 
-} 
+}
 

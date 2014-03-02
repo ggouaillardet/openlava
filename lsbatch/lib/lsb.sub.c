@@ -1378,6 +1378,7 @@ subJob(struct submit  *jobSubReq, struct submitReq *submitReq,
         goto cleanup;
     }
 
+    niosSock = 0;
     if (submitReq->options & SUB_INTERACTIVE) {
 	if (submitReq->options & SUB_PTY) {
 	    if (!isatty(0) && !isatty(1))
@@ -3693,7 +3694,7 @@ struct submit *
 parseOptFile_ (char *filename, struct submit *req, char **errMsg)
 {
     static char fname[] = "parseOptFile_";
-    char *lineBuf;
+    char *lineBuf = NULL;
     int length = 0;
     int lineLen;
     int optArgc;
@@ -3784,9 +3785,9 @@ childExit:
 		 != sizeof (length))
         goto parentErr;
 
-    if ((lineBuf = (char *) malloc (length + 1)) == NULL ) {
-        if (logclass & (LC_TRACE | LC_EXEC))
-	    ls_syslog(LOG_DEBUG, "%s: parent malloc faild!", fname);
+    lineBuf = calloc(length + 1, sizeof(char));
+    if (lineBuf == NULL) {
+	ls_syslog(LOG_ERR, "%s: parent malloc failed %m", __func__);
 	goto parentErr;
     }
     if (read(childIoFd[0], (char *) lineBuf, length) != length) {

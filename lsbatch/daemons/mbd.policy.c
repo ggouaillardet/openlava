@@ -193,7 +193,7 @@ static int reservePreemptResources(struct jData *jp, int numHosts,
 
 #define ENDFORALL_PRMPT_HOST_RSRCS } ENDFORALL_PRMPT_RSRCS;             \
     }                                                                   \
-                                                                    }
+                                                                            }
 
 #define CANNOT_BE_PREEMPTED_FOR_RSRC(s) ( (s->jFlags & JFLAG_URGENT) || \
                                           (s->jFlags & JFLAG_URGENT_NOSTOP) || \
@@ -1249,11 +1249,11 @@ getJUsable(struct jData *jp, int *numJUsable, int *nProc)
         /* floating host this needs to get resized.
          */
         jUsable = my_calloc(nhosts,
-                             sizeof(struct hData *), fname);
+                            sizeof(struct hData *), fname);
         candHosts = my_calloc(nhosts,
                               sizeof(struct candHost), fname);
         jUnusable = my_calloc(nhosts,
-                               sizeof (struct hData *), fname);
+                              sizeof (struct hData *), fname);
         jReasonTb = my_calloc(nhosts + 1, sizeof(int), fname);
     }
 
@@ -1398,7 +1398,7 @@ getJUsable(struct jData *jp, int *numJUsable, int *nProc)
 
             numHosts = getHostsByResReq(jp->qPtr->resValPtr,
                                         &numHosts,
-                                         jUsable,
+                                        jUsable,
                                         &thrown,
                                         hData,
                                         &noUse);
@@ -4107,7 +4107,7 @@ jobStartTime (struct jData *jp)
     FREEUP (jobTable);
     return;
 
-    }
+}
 
 static int
 isAskedHost (struct hData *hPtr, struct jData *jp)
@@ -4172,8 +4172,6 @@ scheduleAndDispatchJobs(void)
     struct jRef *jR;
     struct jRef *jR0;
     struct jData *jPtr;
-    struct jData *jPtr0;
-    int min;
     int cc;
 
     now_disp = time(NULL);
@@ -4217,15 +4215,6 @@ scheduleAndDispatchJobs(void)
                     }
                     continue;
                 }
-                /* The purpose of the pending job reference
-                 * list is to make sure that each pending job
-                 * is looked at by the scheduler only once.
-                 */
-                jR = calloc(1, sizeof(struct jRef));
-                jR->job = jPtr;
-
-                listInsertEntryAtFront(jRefList,
-                                       (struct _listEntry *)jR);
             }
         }
 
@@ -4401,85 +4390,59 @@ scheduleAndDispatchJobs(void)
                   __func__, numQUsable, timeGetQUsable);
     }
 
-    if (LIST_NUM_ENTRIES(jRefList) == 0) {
-        ls_syslog(LOG_DEBUG, "\
-%s: no pending or migrating to jobs to schedule at the moment.", __func__);
-        resetSchedulerSession();
-        return 0;
-    }
-
     loopCount = 0;
     ZERO_OUT_TIMERS();
 
-	{
-		jsp->(*lsb_elect_job)(jQlist, &jPtr);
-	}
+    for (i = MJL; i <= PJL; i++) {
+        struct qData *qPtr;
 
-again:
-    min = INT32_MAX;
-    jR0 = NULL;
-    for (jR = (struct jRef *)jRefList->back;
-         jR != (void *)jRefList;
-         jR = (struct jRef *)jR->back) {
+        for (jPtr = jDataList[i]->back;
+             jPtr != jDataList[i];
+             jPtr = jPtr->back) {
 
-        jPtr = jR->job;
-        assert(jPtr->uPtr->numPEND > 0);
-
-        if (! (jPtr->qPtr->qAttrib & Q_ATTRIB_ROUND_ROBIN)) {
-            /* this is a fcfs queue so just dequeue the first
-             * job on the priority list and try to run it.
+            /* The purpose of the pending job reference
+             * list is to make sure that each pending job
+             * is looked at by the scheduler only once.
              */
-            listRemoveEntry(jRefList,
-                            (struct _listEntry *)jR);
-            free(jR);
-            break;
+            jR = calloc(1, sizeof(struct jRef));
+            jR->job = jPtr;
+            qPtr = jPtr->qPtr;
+
+            listInsertEntryAtFront(jRefList,
+                                   (struct _listEntry *)jR);
+            if (jPtr->back == jDataList[i]
+                || jPtr->qPtr->priority != jPtr->back->qPtr->priority)
+                break;
         }
 
-        if (jPtr->uPtr->numRUN < min) {
-            /* get the job whose user has
-             * the least running jobs.
-             */
-            min = jPtr->uPtr->numRUN;
-            jR0 = jR;
-        }
+        for (jR = (struct jRef *)jRefList->back;
+             jR != (void *)jRefList;
+             jR = (struct jRef *)jR->back) {
+            struct jData *jPtr;
 
-        jPtr0 = jR->back->job;
-        if (jR->back == (void *)jRefList
-            || jPtr->qPtr->priority != jPtr0->qPtr->priority) {
-            /* either at the end of the list, in which case
-             * jPtr0 is bogus, or we just hit another queue
-             * so we have to give to the dispatcher the current
-             * higher priority job.
-             */
-            listRemoveEntry(jRefList, (struct _listEntry *)jR0);
-            jPtr = jR0->job;
-            free(jR0);
-            break;
-        }
-    } /* for (jRef = jRefList->back; ...;...) */
+            /*
+              qPtr->jobElect->(*lsb_jp_elect_job)(jRefList, &jPtr);
+            */
 
-    TIMEVAL(0, cc = scheduleAJob(jPtr, TRUE, TRUE), tmpVal);
-    dispRet = XORDispatch(jPtr, FALSE, dispatchAJob0);
-    if (dispRet == DISP_TIME_OUT) {
-        ls_syslog(LOG_DEBUG,"\
+            TIMEVAL(0, cc = scheduleAJob(jPtr, TRUE, TRUE), tmpVal);
+            dispRet = XORDispatch(jPtr, FALSE, dispatchAJob0);
+            if (dispRet == DISP_TIME_OUT) {
+                ls_syslog(LOG_DEBUG,"\
 %s STAY_TOO_LONG 3 loopCount <%d>", __func__, loopCount);
-        DUMP_TIMERS(__func__);
-        DUMP_CNT();
-        RESET_CNT();
-        return -1;
-    }
-    if (dispRet == DISP_FAIL && STAY_TOO_LONG) {
-        DUMP_TIMERS(__func__);
-        DUMP_CNT();
-        RESET_CNT();
-        return -1;
-    }
+                DUMP_TIMERS(__func__);
+                DUMP_CNT();
+                RESET_CNT();
+                return -1;
+            }
+            if (dispRet == DISP_FAIL && STAY_TOO_LONG) {
+                DUMP_TIMERS(__func__);
+                DUMP_CNT();
+                RESET_CNT();
+                return -1;
+            }
 
-    /* if there are more jobs waiting to
-     * be processed go ahead and schedule them
-     */
-    if (jRefList->numEnts > 0)
-        goto again;
+        } /* for (jRefList) */
+    }
 
     if (logclass & LC_SCHED) {
         ls_syslog(LOG_DEBUG,"\

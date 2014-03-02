@@ -125,46 +125,43 @@ LSB_SPOOL_INFO_T *
 copySpoolFile( const char* srcFilePath
               ,spoolOptions_t option )
 {
-    static char fname[] = "copySpoolFile";
     listElementPtr_t bestHostFromList;
     char dirSeparator[] = SPOOL_DIR_SEPARATOR;
-
     struct stat srcFilePathStat;
     char spoolHost[MAXHOSTNAMELEN];
     char localHost[MAXHOSTNAMELEN];
     static LSB_SPOOL_INFO_T spoolFileInfoStruct;
     char srcFileFullPath[MAXFILENAMELEN];
     char srcFileName[MAXFILENAMELEN];
-    char * startFileName = NULL;
+    char *startFileName = NULL;
     char destinationDir[MAXFILENAMELEN], destinationFile[MAXFILENAMELEN];
     char spoolDir[MAXFILENAMELEN];
-    const char * spoolDirPtr;
+    char *spoolDirPtr;
     char spoolFileFullPath[MAXFILENAMELEN];
     spoolCopyStatus_t spoolCopyStatus = SPOOL_COPY_FAILURE;
     pid_t pid = 0;
     char  pidString[16];
     time_t now = 0;
-    LSB_SPOOL_INFO_T* rtnSpoolInfo = NULL;
+    LSB_SPOOL_INFO_T *rtnSpoolInfo = NULL;
     listHeaderPtr_t spoolHostsList = NULL;
-    const char * officialHostNamePtr = NULL;
+    char *officialHostNamePtr = NULL;
 
-
+	spoolDirPtr = NULL;
+	bestHostFromList = NULL;
     spoolFileInfoStruct.srcFile[0]   = '\0';
     spoolFileInfoStruct.spoolFile[0] = '\0';
     srcFileFullPath[0] = '\0';
 
     if (logclass & (LC_TRACE | LC_EXEC)) {
-        ls_syslog(LOG_DEBUG, "%s: Entering this routine...", fname);
+        ls_syslog(LOG_DEBUG, "%s: Entering this routine...", __func__);
     }
 
-
-
-    if (    ( srcFilePath == NULL )
+    if (( srcFilePath == NULL )
          || ( strlen( srcFilePath ) == 0 )
        ) {
         ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd, NL_SETN, 5702,
 		  "%s: srcFilePath is NULL or empty"), /* catgets 5702 */
-		  fname);
+		  __func__);
         lsberrno = LSBE_BAD_ARG;
         goto Error;
     }
@@ -174,7 +171,7 @@ copySpoolFile( const char* srcFilePath
        ) {
         ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd, NL_SETN, 5706,
 		  "%s: option parameter is wrong"),  /* catgets 5706 */
-		  fname);
+		  __func__);
         lsberrno = LSBE_BAD_ARG;
         goto Error;
     }
@@ -197,7 +194,7 @@ copySpoolFile( const char* srcFilePath
 
 
         if ( getcwd(srcFileFullPath, size ) == NULL ) {
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "getcwd" );
+            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, __func__, "getcwd" );
             lsberrno = LSBE_SYS_CALL;
             goto Error;
         }
@@ -216,7 +213,7 @@ copySpoolFile( const char* srcFilePath
        ) {
          ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd, NL_SETN, 5704,
 		   "%s: source file \'%s\' does not exist"), /* catgets 5704 */
-                   fname, srcFileFullPath);
+                   __func__, srcFileFullPath);
          lsberrno = LSBE_SP_SRC_NOT_SEEN;
          goto Error;
     }
@@ -266,9 +263,8 @@ copySpoolFile( const char* srcFilePath
         bestHostFromList = getBestListElement( spoolHostsList );
 
         if ( bestHostFromList == NULL ) {
-           ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd, NL_SETN, 5705,
-                     "%s: Unable to copy file <%s>. $JOB_SPOOLDIR <%s> doesn't exist or permission denied."),  /* catgets 5705 */
-                     fname, srcFilePath,spoolDirPtr);
+           ls_syslog(LOG_ERR, "\
+%s: Unable to copy file %s. $JOB_SPOOLDIR <%s> %m", __func__, srcFilePath,spoolDirPtr);
            goto Error;
         } else {
            strcpy( spoolHost, bestHostFromList->elementName );
@@ -351,7 +347,7 @@ RepeatAttempt:
 Error:
 
     if (logclass & (LC_TRACE | LC_EXEC)) {
-            ls_syslog(LOG_DEBUG, "%s: completed", fname);
+            ls_syslog(LOG_DEBUG, "%s: completed", __func__);
     }
 
     return( rtnSpoolInfo );
