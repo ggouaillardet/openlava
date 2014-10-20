@@ -377,8 +377,12 @@ main(int argc, char **argv)
 	        fprintf(stderr, "lshosts: %s\n", ls_sysmsg());
                 unknown = 1;
                 continue;
-            } else if ((isClus == 0) &&
-                       ((hp = Gethostbyname_(argv[optind])) == NULL)) {
+            } else if (isClus == 1) {
+                /* no multi-cluster support yet */
+                options = ALL_CLUSTERS;
+                i = 0;
+                break;
+            } else if ((hp = Gethostbyname_(argv[optind])) == NULL) {
                 fprintf(stderr, "\
 %s: gethostbyname() failed for host %s.\n", __func__, argv[optind]);
                 unknown = 1;
